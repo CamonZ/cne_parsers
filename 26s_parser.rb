@@ -195,13 +195,13 @@ class Parser
         res = {}
         
         if([:parlatino_indigena, :asamblea_nominal, :asamblea_indigena].include?(vote_type))
-          res[:candidate_name] = keyfy_str(comment.previous_element.search("td:nth-child(1)").first.children.first.text)
+          res[:candidate] = keyfy_str(comment.previous_element.search("td:nth-child(1)").first.children.first.text)
         end
         
-        res[:alliance_name] = keyfy_str(comment.previous_element.search("td:nth-child(2) b").text)
-        res[:alliance_total_votes] = alliance_votes
+        res[:name] = keyfy_str(comment.previous_element.search("td:nth-child(2) b").text)
+        res[:votes] = alliance_votes
         
-        res[:alliance_details] = extract_alliance_details(comment, vote_type)
+        res[:details] = extract_alliance_details(comment, vote_type)
 
         results[:alliances].push(res)
       end
@@ -244,9 +244,7 @@ class Parser
         if(alliance_member_detail.search("td").length == 4)
           member_votes = alliance_member_detail.search("td")[2].text.match(/(\d+)/)[1].to_i
           if(member_votes > 0)
-            res.push({
-              :member_name => keyfy_str(alliance_member_detail.search("td")[1].text),
-              :votes => member_votes })
+            res.push({ keyfy_str(alliance_member_detail.search("td")[1].text) => member_votes })
           end
         end
     end
@@ -255,10 +253,10 @@ class Parser
   
   def extract_tecnical_data(results, table)
     if(table != nil)
-      [ :registered_voters, :scrutinized_voters, 
-        :scrutinized_votes, :abstinent_voters,
-        :valid_votes, :nullified_votes,
-        :total_acts, :scrutinized_acts].each_with_index do |key, index|
+      [ :total_voters, :voted, 
+        :total_votes, :abstinent,
+        :valid, :null,
+        :total_acts, :acts].each_with_index do |key, index|
         results[key] = table[index].css("td")[1].text.strip.to_i
       end
     end
