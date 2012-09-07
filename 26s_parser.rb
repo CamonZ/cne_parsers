@@ -145,8 +145,13 @@ class Parser
         
         admin_ent = { :name => link[:name], :type => type }
         
+        if(type == :center)
+          admin_ent[:code] = link[:breadcrumbs][:center]
+        end
+        
         if(type == :table)
-          admin_ent[:name] = "mesa_" + admin_ent[:name].match(/(\d+)/)[1]
+          admin_ent[:number] = admin_ent[:name].match(/(\d+)/)[1].to_i
+          admin_ent.delete(:name)
         end
         
         if(type != :table)
@@ -198,11 +203,9 @@ class Parser
           res[:candidate] = keyfy_str(comment.previous_element.search("td:nth-child(1)").first.children.first.text)
         end
         
-        res[:name] = keyfy_str(comment.previous_element.search("td:nth-child(2) b").text)
+        res[keyfy_str(comment.previous_element.search("td:nth-child(2) b").text)] = extract_alliance_details(comment, vote_type)
         res[:votes] = alliance_votes
         
-        res[:details] = extract_alliance_details(comment, vote_type)
-
         results[:alliances].push(res)
       end
     end
@@ -253,10 +256,10 @@ class Parser
   
   def extract_tecnical_data(results, table)
     if(table != nil)
-      [ :total_voters, :voted, 
-        :total_votes, :abstinent,
-        :valid, :null,
-        :total_acts, :acts].each_with_index do |key, index|
+      [ :voters, :voted, 
+        :votes, :abstinent,
+        :valid, :nulls,
+        :t_acts, :s_acts].each_with_index do |key, index|
         results[key] = table[index].css("td")[1].text.strip.to_i
       end
     end
