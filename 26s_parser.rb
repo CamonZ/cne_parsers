@@ -62,10 +62,8 @@ class Parser
   ENTITIES = [:state, :municipality, :parish, :center, :table]
   VOTE_TYPE_TO_ID = {
     :parlatino => "parlamento_latinoamericano_lista",
-    :parlatino_indigena => "parlamento_latinoamericano_indigena", 
     :asamblea_lista => "asamblea_nacional_lista", 
     :asamblea_nominal => "asamblea_nacional_nominal", 
-    :asamblea_indigena => "asamblea_nacional_indigena"
   }
   
   def initialize(args)
@@ -199,7 +197,7 @@ class Parser
       if(alliance_votes > 0)
         res = {}
         
-        if([:parlatino_indigena, :asamblea_nominal, :asamblea_indigena].include?(vote_type))
+        if(:asamblea_nominal == vote_type)
           res[:candidate] = keyfy_str(comment.previous_element.search("td:nth-child(1)").first.children.first.text)
         end
         
@@ -210,22 +208,17 @@ class Parser
       end
     end
 
+    #even with the funny error message there's circunscription info
+    if(vote_type == :asamblea_nominal)
+      results[:circunscription] = page.search("##{VOTE_TYPE_TO_ID[vote_type]}").search("table:first td:nth-child(2)").text.strip.to_i
+    end
+    
     #if there are no comments then there's the funny error message
     if comments.length > 0
-      if(vote_type == :asamblea_nominal)
-        results[:circunscription] = page.search("##{VOTE_TYPE_TO_ID[vote_type]}").search("table:first td:nth-child(2)").text.strip.to_i
-      end
-    
-      if(vote_type == :asamblea_indigena)
-        results[:region] = keyfy_str(page.search("##{VOTE_TYPE_TO_ID[vote_type]}").search("table:first td:nth-child(2)").children.first.text)
-      end
-    
       details_table = details_table_for_vote_type(vote_type, page)
     
       #tecnical data for vote_type
-      if(vote_type != :asamblea_indigena)
-        extract_tecnical_data(results, details_table)
-      end
+      extract_tecnical_data(results, details_table)
     else
       results = {:unavailable => true}
     end
@@ -234,7 +227,7 @@ class Parser
   end
   
   def extract_alliance_details(comment, vote_type)
-    res = []
+    res = {}
     alliance_details_table = comment.next_element.search("div table:last")
 
     if(![:parlatino_indigena, :asamblea_indigena].include?(vote_type))
@@ -247,7 +240,7 @@ class Parser
         if(alliance_member_detail.search("td").length == 4)
           member_votes = alliance_member_detail.search("td")[2].text.match(/(\d+)/)[1].to_i
           if(member_votes > 0)
-            res.push({ keyfy_str(alliance_member_detail.search("td")[1].text) => member_votes })
+            res[keyfy_str(alliance_member_detail.search("td")[1].text)] = member_votes
           end
         end
     end
